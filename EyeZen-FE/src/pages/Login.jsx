@@ -7,6 +7,8 @@ import axios from "../apis/axios";
 import Loader from "../components/Loader";
 import { Form, Input } from "antd";
 import { MailOutlined, LockOutlined } from "@ant-design/icons";
+import { GoogleLogin } from '@react-oauth/google';
+import { jwtDecode } from 'jwt-decode';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -113,6 +115,38 @@ const Login = () => {
           </Form>
 
           {loading && <Loader />}
+          <div className="pt-5">
+            <GoogleLogin
+              onSuccess={async (credentialResponse) => {
+                const credentialResponseDecoded = jwtDecode(credentialResponse.credential);
+                try {
+                  const res = await axios.post("auth/google", {
+                    email: credentialResponseDecoded.email,
+                    name: credentialResponseDecoded.name,
+                    picture: credentialResponseDecoded.picture,
+                  });
+
+                  dispatch({ type: "LOGIN_SUCCESS", payload: res.data });
+                  if (res.data.isAdmin) {
+                    navigate("/admin");
+                  } else {
+                    navigate("/");
+                  }
+                } catch (err) {
+                  console.log('Google Login Failed', err);
+                  Swal.fire({
+                    icon: "error",
+                    title: "Oops...",
+                    text: "Google login failed",
+                  });
+                }
+              }}
+              onError={() => {
+                console.log('Login Failed');
+              }}
+            />
+          </div>
+
         </div>
       </div>
 
