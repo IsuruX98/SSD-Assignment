@@ -2,6 +2,38 @@ const asyncHandler = require("express-async-handler");
 const User = require("../models/userModel");
 const generateToken = require("../utils/generateToken");
 
+//@desc     Google Auth user/set token
+//route     POST /api/users/google-auth
+//@access   Public
+const googleAuthUser = asyncHandler(async (req, res) => {
+  const { email, name, picture } = req.body;
+
+  // Check if the user already exists
+  let user = await User.findOne({ email });
+
+  // If the user does not exist, create a new user
+  if (!user) {
+    user = await User.create({
+      name,
+      email,
+      mobile: "",
+      password: "",
+    });
+  }
+
+  // Create and send the token
+  generateToken(res, user._id);
+
+  res.status(200).json({
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    isAdmin: user.isAdmin,
+    picture: picture,
+  });
+});
+
+
 //@desc     Auth user/set token
 //route     POST /api/users/auth
 //@access   Public
@@ -157,4 +189,5 @@ module.exports = {
   updateUserProfile,
   deleteUserProfile,
   getAllProfiles,
+  googleAuthUser
 };
